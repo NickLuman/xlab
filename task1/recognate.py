@@ -109,11 +109,11 @@ def logger_db(data):
 	cursor.execute("""CREATE TABLE IF NOT EXISTS recognation(
                     date date,
                     time time, 
-                    uid uuid,
-                    result_m varchar(50), 
+                    uuid uuid,
+                    result_act varchar(50), 
                     phone varchar(20),
                     duration real,
-                    result_r varchar(50)
+                    result_recognation varchar(50)
                 );""")
 	
 	cursor.execute("INSERT INTO recognation VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', {5}, '{6}');".format(
