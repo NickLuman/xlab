@@ -1,0 +1,10 @@
+SELECT r.date as 'Дата', r.result_a as 'Результат распознавания',
+        count(r.date) as 'Кол-во результатов за каждую дату', 
+        sum(r.duration) as 'Общая продолжительность',
+        p.name as 'Название проекта',
+        s.name as 'Имя сервера'
+FROM recognation r 
+JOIN Project p ON p.id = r.id
+JOIN Server s ON s.id = r.id
+WHERE r.date BETWEEN '2020/08/29' and '2020/09/29'
+GROUP BY r.result_a, r.date
