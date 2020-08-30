@@ -20,6 +20,10 @@ USER = '***'
 PASSWORD = '***'
 HOST = '***'
 
+LOG_ACTS_FILENAME = '***'
+LOG_ERRORS_FILENAME = '***'
+
+
 def input_data():
 	WAV_PATH = input("Input path to .wav file: ") or ''
 	PHONE_NUMBER = input("Input phone number: ") or ''
@@ -41,7 +45,7 @@ def send_for_recognition(api_key, secret_key, filename):
 	response = client.recognize(filename, audio_config)
 
 	if not response:
-		error_logger("SpeechException", "send for recognation", "Unknown error")
+		logger_errors("SpeechException", "send for recognation", "Unknown error")
 		raise SpeechException("Unknown error\n")
 
 	return response
@@ -84,15 +88,15 @@ def second_stage_rec(response, config):
 
 
 	if result == -1 or changes > 1: 
-		error_logger("ClassificationException", "second stage recognation",
+		logger_errors("ClassificationException", "second stage recognation",
 		             "Impossible to determine the class of the transcript")
 		raise ClassificationException("Impossible to determine the class of the transcript")
 
 	return result
 	
 
-def logger_file(data):
-	with open('logger.txt', 'a') as file: 
+def logger_acts(data):
+	with open(LOG_ACTS_FILENAME, 'a') as file: 
 		file.write("date: {0}, time: {1}, uuid: {2}, result of act: {3}, phone number: {4}, duration: {5}, result of recognation: {6}\n".format(
 				data['date'], data['time'], data['uuid'], data['res_a'], data['phone'], data['duration'], data['res_r'] 
 			)
@@ -124,13 +128,18 @@ def logger_db(data):
 	conn.close()
 
 
-def main_classifier():
+def logger_errors(err_type, part, err):
+	with open(LOG_ERRORS_FILENAME, 'a') as file:
+		file.write("{0} - {1} - {2}\n".format(err_type, part, err))
+
+
+def process():
 	request = input_data()
 
 	if request['wav_path']:
 		response = send_for_recognition(API_KEY, SECRET_KEY, request['wav_path'])
 	else:
-		error_logger("Exception", "input_data", "File path was not entered")
+		logger_errors("Exception", "input_data", "File path was not entered")
 		raise Exception("File path was not entered")
 
 	result = -1
@@ -140,7 +149,7 @@ def main_classifier():
 	elif request['stage'] == '2':
 		result = second_stage_rec(response, conf_ans)
 	else:
-		error_logger("Exception", "input_data", "Wrong format of recognation stage")
+		logger_errors("Exception", "input_data", "Wrong format of recognation stage")
 		raise Exception ("Wrong format of recognation stage\n")
 
 	date = datetime.now()
@@ -160,18 +169,13 @@ def main_classifier():
 		'res_r': result_recognition
 	}
 
-	logger_file(data)
+	logger_acts(data)
 
 	if request['db_flag'] == '-db':
 		logger_db(data)
 
 	path = os.path.join(os.path.abspath(os.path.dirname(__file__)), request['wav_path'])
 	os.remove(path)
-
-
-def error_logger(err_type, part, err):
-	with open('errors.txt', 'a') as file:
-		file.write("{0} - {1} - {2}\n".format(err_type, part, err))
 
 
 class ClassificationException(Exception):
@@ -181,8 +185,7 @@ class ClassificationException(Exception):
 class SpeechException(Exception):
 	pass
 
-# if __name__ == "__main__":
-# 	main_classifier()
-
+if __name__ == "__main__":
+	process()
 
 	
